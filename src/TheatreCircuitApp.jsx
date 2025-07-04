@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
 const TheaterCircuitApp = () => {
   const [currentView, setCurrentView] = useState('competitions');
   const [showModal, setShowModal] = useState(false);
@@ -87,11 +90,11 @@ const TheaterCircuitApp = () => {
   });
 
   const categories = [
-    { value: 'stage', label: 'Stage Play', color: 'bg-blue-100 text-blue-800' },
-    { value: 'street', label: 'Street Play', color: 'bg-green-100 text-green-800' },
-    { value: 'mime', label: 'Mime', color: 'bg-purple-100 text-purple-800' },
-    { value: 'monologue', label: 'Monologue', color: 'bg-orange-100 text-orange-800' },
-    { value: 'improv', label: 'Improv', color: 'bg-red-100 text-red-800' }
+    { value: 'stage', label: 'Stage Play', variant: 'primary' },
+    { value: 'street', label: 'Street Play', variant: 'success' },
+    { value: 'mime', label: 'Mime', variant: 'secondary' },
+    { value: 'monologue', label: 'Monologue', variant: 'warning' },
+    { value: 'improv', label: 'Improv', variant: 'danger' }
   ];
 
   const handleSubmit = () => {
@@ -131,8 +134,10 @@ const TheaterCircuitApp = () => {
   };
 
   const handleDelete = (id) => {
-    setCompetitions(competitions.filter(comp => comp.id !== id));
-    setRegistrations(registrations.filter(reg => reg.competitionId !== id));
+    if (window.confirm('Are you sure you want to delete this competition?')) {
+      setCompetitions(competitions.filter(comp => comp.id !== id));
+      setRegistrations(registrations.filter(reg => reg.competitionId !== id));
+    }
   };
 
   const filteredCompetitions = competitions.filter(comp => {
@@ -150,9 +155,9 @@ const TheaterCircuitApp = () => {
   const upcomingEvents = myRegistrations.filter(comp => comp.status === 'upcoming');
   const pastEvents = myRegistrations.filter(comp => comp.status === 'completed');
 
-  const getCategoryStyle = (category) => {
+  const getCategoryVariant = (category) => {
     const cat = categories.find(c => c.value === category);
-    return cat ? cat.color : 'bg-gray-100 text-gray-800';
+    return cat ? cat.variant : 'secondary';
   };
 
   const formatDate = (dateString) => {
@@ -164,98 +169,131 @@ const TheaterCircuitApp = () => {
     });
   };
 
+  const formatTime = (timeString) => {
+    return new Date(`1970-01-01T${timeString}`).toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusBadge = (status) => {
+    return status === 'upcoming' ? 
+      <span className="badge bg-success">Upcoming</span> : 
+      <span className="badge bg-secondary">Completed</span>;
+  };
+
   const CompetitionCard = ({ competition, showActions = false }) => (
-    <div className="card mb-4 shadow-sm">
-      <div className="d-flex justify-content-between align-items-start mb-3">
-        <div className="flex-1">
-          <h5 className="card-title mb-2">{competition.title}</h5>
-          <p className="text-muted mb-2">by {competition.organizer}</p>
-          <span className={`badge bg-primary`}>
-            {categories.find(c => c.value === competition.category)?.label}
-          </span>
+    <div className="card h-100 shadow-sm border-0">
+      <div className="card-body">
+        <div className="d-flex justify-content-between align-items-start mb-3">
+          <div className="flex-grow-1">
+            <h5 className="card-title mb-2 text-primary">{competition.title}</h5>
+            <p className="text-muted mb-2 small">
+              <i className="bi bi-building me-1"></i>
+              {competition.organizer}
+            </p>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className={`badge bg-${getCategoryVariant(competition.category)}`}>
+                {categories.find(c => c.value === competition.category)?.label}
+              </span>
+              {getStatusBadge(competition.status)}
+            </div>
+          </div>
+          {showActions && (
+            <div className="dropdown">
+              <button className="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i className="bi bi-three-dots"></i>
+              </button>
+              <ul className="dropdown-menu">
+                <li>
+                  <button className="dropdown-item" onClick={() => handleEdit(competition)}>
+                    <i className="bi bi-pencil me-2"></i>Edit
+                  </button>
+                </li>
+                <li>
+                  <button className="dropdown-item text-danger" onClick={() => handleDelete(competition.id)}>
+                    <i className="bi bi-trash me-2"></i>Delete
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
-        {showActions && (
-          <div className="d-flex space-x-2">
-            <button
-              onClick={() => handleEdit(competition)}
-              className="btn btn-outline-primary btn-sm me-2"
-            >
-              <i className="bi bi-pencil"></i>
-            </button>
-            <button
-              onClick={() => handleDelete(competition.id)}
-              className="btn btn-outline-danger btn-sm"
-            >
-              <i className="bi bi-trash"></i>
-            </button>
+        
+        <div className="row g-3 mb-3">
+          <div className="col-md-6">
+            <div className="d-flex align-items-center text-muted small">
+              <i className="bi bi-calendar-event me-2 text-primary"></i>
+              <span>{formatDate(competition.date)}</span>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="d-flex align-items-center text-muted small">
+              <i className="bi bi-clock me-2 text-primary"></i>
+              <span>{formatTime(competition.time)}</span>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="d-flex align-items-center text-muted small">
+              <i className="bi bi-geo-alt me-2 text-primary"></i>
+              <span>{competition.venue}</span>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="d-flex align-items-center text-muted small">
+              <i className="bi bi-people me-2 text-primary"></i>
+              <span>{competition.registeredTeams}/{competition.maxTeams || 'Unlimited'} teams</span>
+            </div>
+          </div>
+        </div>
+        
+        {competition.prizes && (
+          <div className="alert alert-light border-0 py-2 mb-3">
+            <i className="bi bi-trophy text-warning me-2"></i>
+            <strong>Prize:</strong> {competition.prizes}
           </div>
         )}
-      </div>
-      
-      <div className="row mb-3">
-        <div className="col-md-6">
-          <div className="d-flex align-items-center text-muted mb-2">
-            <i className="bi bi-calendar me-2"></i>
-            <span>{formatDate(competition.date)}</span>
-          </div>
-        </div>
         
-        <div className="col-md-6">
-          <div className="d-flex align-items-center text-muted mb-2">
-            <i className="bi bi-clock me-2"></i>
-            <span>{competition.time}</span>
-          </div>
-        </div>
-      </div>
-      
-      <div className="row mb-3">
-        <div className="col-md-6">
-          <div className="d-flex align-items-center text-muted mb-2">
-            <i className="bi bi-geo-alt me-2"></i>
-            <span>{competition.venue}</span>
-          </div>
-        </div>
+        <p className="card-text text-muted mb-3">{competition.description}</p>
         
-        <div className="col-md-6">
-          <div className="d-flex align-items-center text-muted mb-2">
-            <i className="bi bi-people me-2"></i>
-            <span>{competition.registeredTeams}/{competition.maxTeams} teams</span>
+        <div className="border-top pt-3">
+          <div className="row align-items-center">
+            <div className="col-md-8">
+              <small className="text-muted">
+                <i className="bi bi-clock-history me-1"></i>
+                Registration ends: {formatDate(competition.registrationDeadline)}
+              </small>
+            </div>
+            <div className="col-md-4 text-end">
+              {competition.registrationLink && competition.status === 'upcoming' && (
+                <a
+                  href={competition.registrationLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary btn-sm"
+                >
+                  <i className="bi bi-box-arrow-up-right me-1"></i>
+                  Register
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>
       
-      <div className="row mb-3">
-        <div className="col-md-6">
-          <div className="d-flex align-items-center text-muted mb-2">
-            <i className="bi bi-trophy me-2"></i>
-            <span>{competition.prizes}</span>
+      <div className="card-footer bg-light border-0">
+        <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-envelope me-2 text-muted"></i>
+            <small className="text-muted me-3">{competition.contactEmail}</small>
           </div>
+          {competition.contactPhone && (
+            <div className="d-flex align-items-center">
+              <i className="bi bi-telephone me-2 text-muted"></i>
+              <small className="text-muted">{competition.contactPhone}</small>
+            </div>
+          )}
         </div>
-        
-        <div className="col-md-6">
-          <div className="text-sm text-muted">
-            Registration ends: {formatDate(competition.registrationDeadline)}
-          </div>
-        </div>
-      </div>
-      
-      <p className="card-text">{competition.description}</p>
-      
-      <div className="d-flex flex-wrap gap-2">
-        {competition.registrationLink && (
-          <a
-            href={competition.registrationLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary d-inline-flex align-items-center me-2"
-          >
-            <i className="bi bi-box-arrow-up-right me-2"></i>
-            Register Now
-          </a>
-        )}
-        <span className="text-muted">
-          Contact: {competition.contactEmail} | {competition.contactPhone}
-        </span>
       </div>
     </div>
   );
@@ -263,129 +301,182 @@ const TheaterCircuitApp = () => {
   return (
     <div className="min-vh-100 bg-light">
       {/* Header */}
-      <header className="bg-white border-bottom shadow-sm">
-        <div className="container px-4">
-          <div className="d-flex justify-content-between align-items-center py-3">
-            <div className="d-flex align-items-center">
-              <i className="bi bi-trophy h-8 w-8 text-blue-600 mr-3"></i>
-              <h1 className="text-2xl font-bold text-gray-900">Delhi College Theatre Circuit</h1>
-            </div>
-            <nav className="d-flex gap-3">
-              <button
-                onClick={() => setCurrentView('competitions')}
-                className={`btn btn-light btn-sm me-2 ${
-                  currentView === 'competitions'
-                    ? 'active'
-                    : 'text-secondary'
-                }`}
-              >
-                All Competitions
-              </button>
-              <button
-                onClick={() => setCurrentView('calendar')}
-                className={`btn btn-light btn-sm me-2 ${
-                  currentView === 'calendar'
-                    ? 'active'
-                    : 'text-secondary'
-                }`}
-              >
-                My Calendar
-              </button>
-            </nav>
+      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div className="container">
+          <a className="navbar-brand d-flex align-items-center">
+            <i className="bi bi-masks-theater text-primary me-2 fs-4"></i>
+            <span className="fw-bold">Delhi Theatre Circuit</span>
+          </a>
+          
+          <div className="navbar-nav ms-auto">
+            <button
+              onClick={() => setCurrentView('competitions')}
+              className={`btn btn-link nav-link ${currentView === 'competitions' ? 'active fw-bold' : ''}`}
+            >
+              <i className="bi bi-trophy me-1"></i>
+              All Competitions
+            </button>
+            <button
+              onClick={() => setCurrentView('calendar')}
+              className={`btn btn-link nav-link ${currentView === 'calendar' ? 'active fw-bold' : ''}`}
+            >
+              <i className="bi bi-calendar-check me-1"></i>
+              My Calendar
+            </button>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <div className="container px-4 py-8">
+      <div className="container py-4">
         {currentView === 'competitions' && (
           <div>
-            {/* Controls */}
-            <div className="d-flex flex-wrap gap-3 mb-4">
-              <button
-                onClick={() => setShowModal(true)}
-                className="btn btn-primary d-inline-flex align-items-center me-2"
-              >
-                <i className="bi bi-plus me-2"></i>
-                Add Competition
-              </button>
-              
-              <div className="d-flex align-items-center gap-2">
-                <i className="bi bi-search text-muted"></i>
-                <input
-                  type="text"
-                  placeholder="Search competitions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="form-control me-2"
-                />
+            {/* Page Header */}
+            <div className="row mb-4">
+              <div className="col-md-8">
+                <h2 className="h3 mb-2">Theatre Competitions</h2>
+                <p className="text-muted">Discover and participate in exciting theatre competitions across Delhi colleges</p>
               </div>
-              
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="form-control me-2"
-              >
-                <option value="all">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-              
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="form-control me-2"
-              >
-                <option value="all">All Status</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="completed">Completed</option>
-              </select>
+              <div className="col-md-4 text-end">
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="btn btn-primary"
+                >
+                  <i className="bi bi-plus-circle me-2"></i>
+                  Add Competition
+                </button>
+              </div>
             </div>
 
-            {/* Competition List */}
-            <div className="space-y-4">
-              {filteredCompetitions.map(competition => (
-                <CompetitionCard key={competition.id} competition={competition} showActions={true} />
-              ))}
+            {/* Filters */}
+            <div className="card mb-4">
+              <div className="card-body">
+                <div className="row g-3">
+                  <div className="col-md-4">
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <i className="bi bi-search"></i>
+                      </span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search competitions..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="col-md-4">
+                    <select
+                      className="form-select"
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map(cat => (
+                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="col-md-4">
+                    <select
+                      className="form-select"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                      <option value="all">All Status</option>
+                      <option value="upcoming">Upcoming</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Competition Grid */}
+            <div className="row g-4">
+              {filteredCompetitions.length > 0 ? (
+                filteredCompetitions.map(competition => (
+                  <div key={competition.id} className="col-lg-6 col-xl-4">
+                    <CompetitionCard competition={competition} showActions={true} />
+                  </div>
+                ))
+              ) : (
+                <div className="col-12">
+                  <div className="text-center py-5">
+                    <i className="bi bi-search display-1 text-muted"></i>
+                    <h4 className="mt-3">No competitions found</h4>
+                    <p className="text-muted">Try adjusting your search or filter criteria</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {currentView === 'calendar' && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">My Competition Calendar</h2>
+            <div className="row mb-4">
+              <div className="col">
+                <h2 className="h3 mb-2">My Competition Calendar</h2>
+                <p className="text-muted">Track your registered competitions and participation history</p>
+              </div>
+            </div>
             
-            <div className="row">
-              <div className="col-md-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <i className="bi bi-calendar me-2"></i>
-                  Upcoming Events ({upcomingEvents.length})
-                </h3>
-                {upcomingEvents.length > 0 ? (
-                  <div className="space-y-4">
-                    {upcomingEvents.map(competition => (
-                      <CompetitionCard key={competition.id} competition={competition} />
-                    ))}
+            <div className="row g-4">
+              <div className="col-lg-6">
+                <div className="card">
+                  <div className="card-header bg-success text-white">
+                    <h5 className="mb-0">
+                      <i className="bi bi-calendar-plus me-2"></i>
+                      Upcoming Events ({upcomingEvents.length})
+                    </h5>
                   </div>
-                ) : (
-                  <p className="text-muted bg-white p-4 rounded-lg">No upcoming events registered</p>
-                )}
+                  <div className="card-body">
+                    {upcomingEvents.length > 0 ? (
+                      <div className="row g-3">
+                        {upcomingEvents.map(competition => (
+                          <div key={competition.id} className="col-12">
+                            <CompetitionCard competition={competition} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <i className="bi bi-calendar-x display-4 text-muted"></i>
+                        <p className="text-muted mt-3 mb-0">No upcoming events registered</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
               
-              <div className="col-md-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <i className="bi bi-trophy me-2"></i>
-                  Past Events ({pastEvents.length})
-                </h3>
-                {pastEvents.length > 0 ? (
-                  <div className="space-y-4">
-                    {pastEvents.map(competition => (
-                      <CompetitionCard key={competition.id} competition={competition} />
-                    ))}
+              <div className="col-lg-6">
+                <div className="card">
+                  <div className="card-header bg-secondary text-white">
+                    <h5 className="mb-0">
+                      <i className="bi bi-clock-history me-2"></i>
+                      Past Events ({pastEvents.length})
+                    </h5>
                   </div>
-                ) : (
-                  <p className="text-muted bg-white p-4 rounded-lg">No past events to display</p>
-                )}
+                  <div className="card-body">
+                    {pastEvents.length > 0 ? (
+                      <div className="row g-3">
+                        {pastEvents.map(competition => (
+                          <div key={competition.id} className="col-12">
+                            <CompetitionCard competition={competition} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <i className="bi bi-trophy display-4 text-muted"></i>
+                        <p className="text-muted mt-3 mb-0">No past events to display</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -394,213 +485,211 @@ const TheaterCircuitApp = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="modal d-block show">
-          <div className="modal-dialog">
-            <div className="modal-content p-4">
-              <h2 className="text-xl font-bold mb-4">
-                {editingCompetition ? 'Edit Competition' : 'Add New Competition'}
-              </h2>
-              
-              <div className="space-y-4">
-                <div className="row">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Competition Title *
-                    </label>
-                    <input
-                      type="text"
-                      value={newCompetition.title}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, title: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                  
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Organizing Society *
-                    </label>
-                    <input
-                      type="text"
-                      value={newCompetition.organizer}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, organizer: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
+        <>
+          <div className="modal fade show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    <i className="bi bi-plus-circle me-2"></i>
+                    {editingCompetition ? 'Edit Competition' : 'Add New Competition'}
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close" 
+                    onClick={() => {
+                      setShowModal(false);
+                      setEditingCompetition(null);
+                      setNewCompetition({
+                        title: '', organizer: '', date: '', time: '', venue: '', category: 'stage',
+                        description: '', registrationLink: '', registrationDeadline: '', maxTeams: '',
+                        prizes: '', contactEmail: '', contactPhone: ''
+                      });
+                    }}
+                  ></button>
                 </div>
                 
-                <div className="row">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={newCompetition.date}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, date: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                  
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Time *
-                    </label>
-                    <input
-                      type="time"
-                      value={newCompetition.time}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, time: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
+                <div className="modal-body">
+                  <form>
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <label className="form-label">Competition Title *</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={newCompetition.title}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, title: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Organizing Society *</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={newCompetition.organizer}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, organizer: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Date *</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={newCompetition.date}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, date: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Time *</label>
+                        <input
+                          type="time"
+                          className="form-control"
+                          value={newCompetition.time}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, time: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Venue *</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={newCompetition.venue}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, venue: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Category *</label>
+                        <select
+                          className="form-select"
+                          value={newCompetition.category}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, category: e.target.value })}
+                          required
+                        >
+                          {categories.map(cat => (
+                            <option key={cat.value} value={cat.value}>{cat.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Registration Deadline *</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={newCompetition.registrationDeadline}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, registrationDeadline: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Max Teams</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={newCompetition.maxTeams}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, maxTeams: e.target.value })}
+                          placeholder="Leave blank for unlimited"
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Contact Email *</label>
+                        <input
+                          type="email"
+                          className="form-control"
+                          value={newCompetition.contactEmail}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, contactEmail: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="form-label">Contact Phone</label>
+                        <input
+                          type="tel"
+                          className="form-control"
+                          value={newCompetition.contactPhone}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, contactPhone: e.target.value })}
+                        />
+                      </div>
+                      
+                      <div className="col-12">
+                        <label className="form-label">Description *</label>
+                        <textarea
+                          className="form-control"
+                          rows={3}
+                          value={newCompetition.description}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, description: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="col-12">
+                        <label className="form-label">Registration Link</label>
+                        <input
+                          type="url"
+                          className="form-control"
+                          value={newCompetition.registrationLink}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, registrationLink: e.target.value })}
+                          placeholder="https://forms.google.com/your-form-link"
+                        />
+                      </div>
+                      
+                      <div className="col-12">
+                        <label className="form-label">Prizes</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={newCompetition.prizes}
+                          onChange={(e) => setNewCompetition({ ...newCompetition, prizes: e.target.value })}
+                          placeholder="e.g., ₹25,000 for winners"
+                        />
+                      </div>
+                    </div>
+                  </form>
                 </div>
                 
-                <div className="row">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Venue *
-                    </label>
-                    <input
-                      type="text"
-                      value={newCompetition.venue}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, venue: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                  
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Category *
-                    </label>
-                    <select
-                      value={newCompetition.category}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, category: e.target.value })}
-                      className="form-control"
-                    >
-                      {categories.map(cat => (
-                        <option key={cat.value} value={cat.value}>{cat.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowModal(false);
+                      setEditingCompetition(null);
+                      setNewCompetition({
+                        title: '', organizer: '', date: '', time: '', venue: '', category: 'stage',
+                        description: '', registrationLink: '', registrationDeadline: '', maxTeams: '',
+                        prizes: '', contactEmail: '', contactPhone: ''
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleSubmit}
+                  >
+                    <i className="bi bi-check-circle me-2"></i>
+                    {editingCompetition ? 'Update Competition' : 'Add Competition'}
+                  </button>
                 </div>
-                
-                <div className="row">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Registration Deadline *
-                    </label>
-                    <input
-                      type="date"
-                      value={newCompetition.registrationDeadline}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, registrationDeadline: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                  
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Max Teams
-                    </label>
-                    <input
-                      type="number"
-                      value={newCompetition.maxTeams}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, maxTeams: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-                
-                <div className="row">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Contact Email *
-                    </label>
-                    <input
-                      type="email"
-                      value={newCompetition.contactEmail}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, contactEmail: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                  
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Contact Phone
-                    </label>
-                    <input
-                      type="tel"
-                      value={newCompetition.contactPhone}
-                      onChange={(e) => setNewCompetition({ ...newCompetition, contactPhone: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label className="form-label">
-                  Description *
-                </label>
-                <textarea
-                  rows={3}
-                  value={newCompetition.description}
-                  onChange={(e) => setNewCompetition({ ...newCompetition, description: e.target.value })}
-                  className="form-control"
-                />
-              </div>
-              
-              <div>
-                <label className="form-label">
-                  Google Form Registration Link
-                </label>
-                <input
-                  type="url"
-                  value={newCompetition.registrationLink}
-                  onChange={(e) => setNewCompetition({ ...newCompetition, registrationLink: e.target.value })}
-                  placeholder="https://forms.google.com/your-form-link"
-                  className="form-control"
-                />
-              </div>
-              
-              <div>
-                <label className="form-label">
-                  Prizes
-                </label>
-                <input
-                  type="text"
-                  value={newCompetition.prizes}
-                  onChange={(e) => setNewCompetition({ ...newCompetition, prizes: e.target.value })}
-                  placeholder="e.g., ₹25,000 for winners"
-                  className="form-control"
-                />
-              </div>
-              
-              <div className="d-flex justify-content-end gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditingCompetition(null);
-                    setNewCompetition({
-                      title: '', organizer: '', date: '', time: '', venue: '', category: 'stage',
-                      description: '', registrationLink: '', registrationDeadline: '', maxTeams: '',
-                      prizes: '', contactEmail: '', contactPhone: ''
-                    });
-                  }}
-                  className="btn btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="btn btn-primary"
-                >
-                  {editingCompetition ? 'Update Competition' : 'Add Competition'}
-                </button>
               </div>
             </div>
           </div>
-        </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
       )}
     </div>
   );
