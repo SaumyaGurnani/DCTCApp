@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import TheaterCircuitApp from './TheatreCircuitApp'
+import TheaterCircuitApp from './pages/TheatreCircuitApp.jsx'
 
 
 function App() {
